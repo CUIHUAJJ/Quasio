@@ -1,138 +1,263 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>文件上传</title>
-  <!-- Bootstrap 5 & Icons CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pake · 轻量级网页转桌面应用</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    .border-dashed { border-style: dashed !important; }
-    .drop-zone { transition: background .2s, border-color .2s; }
-    .drop-zone.dragover { background: #f8f9fa; border-color: #0d6efd; }
-  </style>
-</head>
-<body class="bg-light d-flex align-items-center justify-content-center vh-100 p-3">
-  <div class="card shadow-sm w-100" style="max-width:480px">
-    <div class="card-header bg-primary text-white d-flex align-items-center">
-      <i class="bi bi-cloud-upload-fill fs-2 me-2"></i>
-      <h5 class="mb-0">上传文件</h5>
-    </div>
-    <div class="card-body">
-      <p class="text-muted">拖拽或点击选择，最多 5 个文件，PNG/JPG/PDF，单文件 ≤ 10 MB。</p>
-      <div id="dropZone" class="drop-zone border border-secondary border-dashed rounded p-5 text-center position-relative">
-        <i class="bi bi-file-earmark-arrow-up fs-1 text-primary mb-2"></i>
-        <div class="fw-semibold">将文件拖这里，或点击选择</div>
-        <input type="file" id="fileInput" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer"/>
-      </div>
-
-      <ul id="fileList" class="list-group list-group-flush mt-3"></ul>
-
-      <div id="progressContainer" class="mt-4 d-none">
-        <div class="d-flex justify-content-between mb-1">
-          <small id="percentText">0%</small>
-          <small id="sizeText">0 / 0 MB</small>
-        </div>
-        <div class="progress">
-          <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-               role="progressbar" style="width: 0%"></div>
-        </div>
-      </div>
-    </div>
-    <div class="card-footer bg-white text-end">
-      <button id="resetBtn" class="btn btn-secondary me-2">重置</button>
-      <button id="uploadBtn" class="btn btn-primary">开始上传</button>
-    </div>
-  </div>
-
-  <script>
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const fileList  = document.getElementById('fileList');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const resetBtn  = document.getElementById('resetBtn');
-    const progCont  = document.getElementById('progressContainer');
-    const progBar   = document.getElementById('progressBar');
-    const percentText = document.getElementById('percentText');
-    const sizeText    = document.getElementById('sizeText');
-
-    let files = [];
-
-    // 拖拽样式切换
-    ['dragenter','dragover'].forEach(e => {
-      dropZone.addEventListener(e, ev => {
-        ev.preventDefault();
-        dropZone.classList.add('dragover');
-      });
-    });
-    ['dragleave','drop'].forEach(e => {
-      dropZone.addEventListener(e, ev => {
-        ev.preventDefault();
-        dropZone.classList.remove('dragover');
-      });
-    });
-
-    // 文件获取 & 列表渲染
-    function renderFiles() {
-      fileList.innerHTML = '';
-      files.slice(0,5).forEach((f,i) => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `
-          <div class="text-truncate" style="max-width:70%">${f.name}</div>
-          <button class="btn btn-sm btn-outline-danger" data-idx="${i}">
-            <i class="bi bi-x"></i>
-          </button>`;
-        fileList.append(li);
-      });
-      fileList.querySelectorAll('button').forEach(btn=>{
-        btn.onclick = () => {
-          files.splice(+btn.dataset.idx,1);
-          renderFiles();
-        };
-      });
+    /* ========== CSS RESET ========== */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f7f9fc;
+    }
+    img {
+      max-width: 100%;
+      display: block;
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    ul {
+      list-style: none;
     }
 
-    dropZone.addEventListener('drop', e => {
-      files = Array.from(e.dataTransfer.files);
-      renderFiles();
-    });
-    fileInput.addEventListener('change', e => {
-      files = Array.from(e.target.files);
-      renderFiles();
-    });
+    /* ========== VARIABLES & BASE ========== */
+    :root {
+      --color-primary: #5568f1;
+      --color-primary-light: #e4e8ff;
+      --color-secondary: #6e728e;
+      --color-bg: #fff;
+      --radius: 8px;
+    }
+    .container {
+      max-width: 1024px;
+      padding: 0 1rem;
+      margin: 0 auto;
+    }
+    .btn {
+      display: inline-block;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary {
+      padding: .6em 1.2em;
+      background-color: var(--color-primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background-color: #3b4fd4;
+    }
 
-    // 重置
-    resetBtn.onclick = () => {
-      files = [];
-      fileInput.value = '';
-      renderFiles();
-      progCont.classList.add('d-none');
-      progBar.style.width = '0';
-      percentText.textContent = '0%';
-      sizeText.textContent = '0 / 0 MB';
-    };
+    /* ========== HEADER ========== */
+    .header {
+      background-color: var(--color-bg);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .header__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+    .header__logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .header__nav a {
+      margin-left: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--color-secondary);
+    }
+    .header__nav a:hover {
+      color: var(--color-primary);
+    }
 
-    // 模拟上传
-    uploadBtn.onclick = () => {
-      if (!files.length) return alert('请先选择文件');
-      progCont.classList.remove('d-none');
-      const total = files.reduce((s,f)=>s+f.size,0);
-      let uploaded = 0;
-      const interval = setInterval(()=>{
-        uploaded += total/60;
-        if (uploaded >= total) {
-          clearInterval(interval);
-          uploaded = total;
-          alert('上传完成！');
-        }
-        const perc = Math.floor(uploaded/total*100);
-        progBar.style.width = perc+'%';
-        percentText.textContent = perc+'%';
-        sizeText.textContent = `${(uploaded/1024/1024).toFixed(1)} / ${(total/1024/1024).toFixed(1)} MB`;
-      },100);
-    };
-  </script>
+    /* ========== HERO ========== */
+    .hero {
+      background: var(--color-primary-light);
+      border-radius: var(--radius);
+      margin: 2rem 0;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    .hero__title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: .5rem;
+    }
+    .hero__desc {
+      font-size: 1rem;
+      color: var(--color-secondary);
+      margin-bottom: 1rem;
+      max-width: 600px;
+      margin-inline: auto;
+    }
+    .hero__badges img {
+      margin: 0 .3rem;
+      vertical-align: middle;
+    }
+
+    /* ========== FEATURES ========== */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .feature {
+      background: var(--color-bg);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      text-align: center;
+    }
+    .feature__icon {
+      font-size: 2rem;
+      color: var(--color-primary);
+      margin-bottom: .75rem;
+    }
+    .feature__title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: .5rem;
+    }
+    .feature__desc {
+      font-size: .95rem;
+      color: var(--color-secondary);
+      line-height: 1.4;
+    }
+
+    /* ========== QUICK START ========== */
+    .quickstart {
+      background: var(--color-bg);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      margin-bottom: 2rem;
+    }
+    .quickstart__title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: .75rem;
+      color: var(--color-primary);
+    }
+    .quickstart__commands {
+      background: #f1f3f7;
+      padding: 1rem;
+      border-radius: var(--radius);
+      font-family: Consolas, Menlo, monospace;
+      font-size: .9rem;
+      overflow-x: auto;
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      text-align: center;
+      padding: 2rem 0 1rem;
+      font-size: .9rem;
+      color: var(--color-secondary);
+    }
+    .footer a {
+      color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container header__inner">
+      <div class="header__logo">Pake</div>
+      <nav class="header__nav">
+        <a href="#features">特性</a>
+        <a href="#quickstart">快速开始</a>
+        <a href="https://github.com/yourname/pake" target="_blank">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="container hero">
+    <h1 class="hero__title">Pake · Rust 驱动的网页转桌面</h1>
+    <p class="hero__desc">
+      Pake 一键将任何网页打包成 Mac、Windows、Linux 桌面应用，二进制体积小、启动迅速、安全稳定。
+    </p>
+    <div class="hero__badges">
+      <img src="https://img.shields.io/github/v/release/yourname/pake?color=5568f1" alt="Release">
+      <img src="https://img.shields.io/github/license/yourname/pake" alt="License">
+      <img src="https://img.shields.io/github/stars/yourname/pake?style=social" alt="Stars">
+      <img src="https://img.shields.io/dub/l/daily?color=ef5350&style=flat-square" alt="Downloads">
+    </div>
+    <p class="hero__desc" style="margin-top:1rem;">
+      比 Electron 体积小 20 倍；基于 Rust Tauri，性能更快更轻量；简单命令行，降低学习成本。
+    </p>
+    <a href="#quickstart" class="btn btn-primary">立即上手</a>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="container" id="features">
+    <div class="features">
+      <div class="feature">
+        <div class="feature__icon">⚡️</div>
+        <div class="feature__title">极速启动</div>
+        <div class="feature__desc">基于 Tauri 内核，秒级冷启动，体验丝滑。</div>
+      </div>
+      <div class="feature">
+        <div class="feature__icon">🧰</div>
+        <div class="feature__title">跨平台</div>
+        <div class="feature__desc">原生支持 macOS、Windows、Linux，多端统一体验。</div>
+      </div>
+      <div class="feature">
+        <div class="feature__icon">💾</div>
+        <div class="feature__title">小体积</div>
+        <div class="feature__desc">最终包体积约 5MB 左右，比 Electron 小 95%。</div>
+      </div>
+      <div class="feature">
+        <div class="feature__icon">🔧</div>
+        <div class="feature__title">简单易用</div>
+        <div class="feature__desc">一条命令打包现成应用，告别繁琐配置。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICK START -->
+  <section class="container quickstart" id="quickstart">
+    <h2 class="quickstart__title">快速开始</h2>
+    <pre class="quickstart__commands">
+git clone https://github.com/yourname/pake.git
+cd pake
+cargo install --path .
+pake init https://example.com
+pake build
+    </pre>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    © 2025 Pake • <a href="https://github.com/yourname/pake" target="_blank">GitHub 项目</a> • MIT License
+  </footer>
+
 </body>
 </html>
