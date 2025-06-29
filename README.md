@@ -3,217 +3,136 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>上传界面</title>
-  <style>
-    /* 通用重置和字体 */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      color: #333;
-      line-height: 1.6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-
-    /* 容器 */
-    .upload-wrapper {
-      background: #fff;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 8px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-    }
-    .upload-header {
-      background: linear-gradient(90deg, #4e54c8, #8f94fb);
-      padding: 20px;
-      text-align: center;
-      color: #fff;
-    }
-    .upload-header h1 {
-      font-size: 24px;
-      font-weight: 600;
-    }
-
-    /* 主体 */
-    .upload-body {
-      padding: 20px 24px;
-    }
-    .upload-description {
-      margin-bottom: 16px;
-      font-size: 14px;
-      color: #666;
-    }
-
-    /* 上传区 */
-    .upload-area {
-      border: 2px dashed #ccc;
-      border-radius: 6px;
-      padding: 40px 20px;
-      text-align: center;
-      transition: border-color 0.3s, background-color 0.3s;
-      cursor: pointer;
-      position: relative;
-    }
-    .upload-area:hover {
-      border-color: #4e54c8;
-      background-color: rgba(78, 84, 200, 0.05);
-    }
-    .upload-area input[type="file"] {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      cursor: pointer;
-    }
-    .upload-area .icon {
-      font-size: 48px;
-      color: #4e54c8;
-      margin-bottom: 12px;
-    }
-    .upload-area p {
-      font-size: 16px;
-      color: #555;
-    }
-    .upload-area small {
-      display: block;
-      margin-top: 8px;
-      font-size: 12px;
-      color: #999;
-    }
-
-    /* 进度条 */
-    .progress-bar {
-      margin-top: 20px;
-      height: 6px;
-      background: #e0e0e0;
-      border-radius: 3px;
-      overflow: hidden;
-      display: none;
-    }
-    .progress-bar-inner {
-      width: 0;
-      height: 100%;
-      background: #4e54c8;
-      transition: width 0.4s ease;
-    }
-
-    /* 按钮 */
-    .upload-footer {
-      padding: 16px 24px;
-      text-align: right;
-      background: #fafafa;
-    }
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .btn-primary {
-      background: #4e54c8;
-      color: #fff;
-    }
-    .btn-primary:hover {
-      background: #3b43a4;
-    }
-    .btn-secondary {
-      background: #e0e0e0;
-      color: #666;
-      margin-right: 8px;
-    }
-    .btn-secondary:hover {
-      background: #cfcfcf;
-    }
-  </style>
+  <title>文件上传</title>
+  <!-- 引入 Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="upload-wrapper">
-    <header class="upload-header">
-      <h1>上传文件</h1>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
+    <!-- 标题 -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+      <h1 class="text-2xl font-semibold">上传文件</h1>
     </header>
-    <section class="upload-body">
-      <p class="upload-description">支持拖拽或点击上传，单次最多可上传 5 个文件，支持 PNG/JPG/PDF。</p>
-      <div class="upload-area" id="uploadArea">
-        <div class="icon">📁</div>
-        <p>将文件拖到此处，或点击选择</p>
-        <small>最大 10MB/个 文件</small>
-        <input type="file" id="fileInput" multiple />
+
+    <!-- 说明 & 上传区 -->
+    <section class="p-6">
+      <p class="text-gray-600 mb-4">支持拖拽或点击选择，最多 5 个文件，PNG/JPG/PDF。</p>
+      
+      <div id="dropZone"
+           class="border-2 border-dashed border-gray-300 rounded-md p-8 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition">
+        <div class="text-indigo-500 text-4xl mb-2">📂</div>
+        <p class="text-gray-700">将文件拖到此处，或点击选择</p>
+        <small class="text-gray-500">单文件 ≤ 10MB</small>
+        <input type="file" id="fileInput" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
       </div>
-      <div class="progress-bar" id="progressBar">
-        <div class="progress-bar-inner" id="progressBarInner"></div>
+
+      <!-- 文件预览列表 -->
+      <ul id="fileList" class="mt-4 space-y-2"></ul>
+
+      <!-- 进度条 -->
+      <div id="progressWrapper" class="mt-6 hidden">
+        <div class="text-right text-sm text-gray-600 mb-1"><span id="percent">0%</span></div>
+        <div class="w-full bg-gray-200 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-2 bg-indigo-600 w-0 transition-all"></div>
+        </div>
       </div>
     </section>
-    <footer class="upload-footer">
-      <button class="btn btn-secondary" id="resetBtn">重置</button>
-      <button class="btn btn-primary" id="uploadBtn">开始上传</button>
+
+    <!-- 按钮组 -->
+    <footer class="bg-gray-50 p-6 flex justify-end space-x-3">
+      <button id="resetBtn" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-700">
+        重置
+      </button>
+      <button id="uploadBtn" class="px-4 py-2 bg-indigo-600 rounded hover:bg-indigo-700 text-white">
+        开始上传
+      </button>
     </footer>
   </div>
 
   <script>
+    const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
-    const uploadArea = document.getElementById('uploadArea');
+    const fileList  = document.getElementById('fileList');
     const uploadBtn = document.getElementById('uploadBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const progressBar = document.getElementById('progressBar');
-    const progressBarInner = document.getElementById('progressBarInner');
+    const resetBtn  = document.getElementById('resetBtn');
+    const progWrap  = document.getElementById('progressWrapper');
+    const progBar   = document.getElementById('progressBar');
+    const percentEl = document.getElementById('percent');
+
     let files = [];
 
-    uploadArea.addEventListener('dragover', e => {
-      e.preventDefault();
-      uploadArea.classList.add('hover');
+    // 拖拽样式
+    ['dragenter','dragover'].forEach(ev => {
+      dropZone.addEventListener(ev, e => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-500','bg-indigo-50');
+      });
     });
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.classList.remove('hover');
+    ['dragleave','drop'].forEach(ev => {
+      dropZone.addEventListener(ev, e => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500','bg-indigo-50');
+      });
     });
-    uploadArea.addEventListener('drop', e => {
-      e.preventDefault();
+
+    // 拖拽/选择文件回调
+    dropZone.addEventListener('drop', e => {
       files = Array.from(e.dataTransfer.files);
-      console.log(files);
+      renderList();
     });
     fileInput.addEventListener('change', e => {
       files = Array.from(e.target.files);
-      console.log(files);
+      renderList();
     });
 
-    uploadBtn.addEventListener('click', () => {
-      if (files.length === 0) {
-        alert('请选择文件！');
-        return;
-      }
-      progressBar.style.display = 'block';
-      // 模拟上传进度
-      let loaded = 0;
-      const total = files.reduce((sum, f) => sum + f.size, 0);
-      const interval = setInterval(() => {
-        loaded += total / 50;
-        if (loaded >= total) {
-          loaded = total;
-          clearInterval(interval);
-          alert('上传完成！');
-        }
-        const percent = Math.round((loaded / total) * 100);
-        progressBarInner.style.width = percent + '%';
-      }, 100);
-    });
+    // 渲染文件列表
+    function renderList() {
+      fileList.innerHTML = '';
+      files.slice(0, 5).forEach((f, i) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between bg-gray-50 p-2 rounded';
+        li.innerHTML = `
+          <span class="text-gray-800 text-sm truncate">${f.name}</span>
+          <button data-index="${i}" class="text-red-500 hover:text-red-700 text-sm">移除</button>
+        `;
+        fileList.append(li);
+      });
 
+      // 绑定移除
+      fileList.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', e => {
+          files.splice(+e.target.dataset.index, 1);
+          renderList();
+        });
+      });
+    }
+
+    // 重置
     resetBtn.addEventListener('click', () => {
       files = [];
       fileInput.value = '';
-      progressBar.style.display = 'none';
-      progressBarInner.style.width = '0';
+      renderList();
+      progWrap.classList.add('hidden');
+      progBar.style.width = '0';
+      percentEl.textContent = '0%';
+    });
+
+    // 模拟上传
+    uploadBtn.addEventListener('click', () => {
+      if (!files.length) return alert('请先选择文件');
+      progWrap.classList.remove('hidden');
+      let uploaded = 0, total = files.reduce((s,f)=>s+f.size,0);
+      const interval = setInterval(() => {
+        uploaded += total/60;
+        if (uploaded >= total) {
+          clearInterval(interval);
+          uploaded = total;
+          alert('上传完成！');
+        }
+        const p = Math.min(100, Math.floor(uploaded/total*100));
+        progBar.style.width = p+'%';
+        percentEl.textContent = p+'%';
+      }, 100);
     });
   </script>
 </body>
