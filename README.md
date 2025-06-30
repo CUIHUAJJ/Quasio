@@ -72,25 +72,3 @@ pake build:desktop  # Electron Windows/macOS</code></pre>
   <footer class="footer">
     © 2025 Quasio Lab • <a href="https://github.com/yourname/quasio-lab" target="_blank" rel="noopener">GitHub 项目</a> • MIT License
   </footer>
-
-  <!-- Prism.js & 主题切换 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script>
-    const btnTheme = document.querySelector('.header__theme');
-    const root = document.documentElement;
-    // 加载上次主题
-    const saved = localStorage.getItem('theme');
-    if (saved) {
-      root.setAttribute('data-theme', saved);
-      btnTheme.textContent = saved === 'light' ? '🌙' : '☀️';
-    }
-    // 切换
-    btnTheme.addEventListener('click', () => {
-      const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      root.setAttribute('data-theme', next);
-      btnTheme.textContent = next === 'light' ? '🌙' : '☀️';
-      localStorage.setItem('theme', next);
-    });
-  </script>
-</body>
-</html>
